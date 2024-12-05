@@ -14,196 +14,457 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.0/purify.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+        }
+
+        .navbar {
+            width: 100%;
+            background-color: #4285F4;
+        }
+
+        .container-fluid {
+            display: flex;
+            justify-content: space-between;
+            /* Ensures left, center, and right sections are properly spaced */
+            align-items: center;
+            padding: 0;
+            margin: 0;
+        }
+
+        .navbar-nav {
+            display: flex;
+            gap: 15px;
+            /* Space between nav items */
+        }
+
+        .navbar-brand img {
+            width: 50px;
+            height: 40px;
+            border-radius: 10px;
+            border: 1px solid black;
+        }
+
+        .collapse {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            /* Center-align nav items */
+        }
+
+        .navbar-brand:last-child {
+            margin-left: auto;
+            /* Push the right logo to the far right */
+        }
+
+        .active {
+            font-weight: bolder;
+        }
+
+        /* Hover effect for nav links */
+        .nav-link {
+            color: #ffffff;
+            /* Default color */
+            text-decoration: none;
+            /* No underline */
+            transition: color 0.3s ease, background-color 0.3s ease;
+            /* Smooth transition */
+            padding: 5px 10px;
+            /* Padding for better hover visibility */
+            border-radius: 5px;
+            /* Rounded corners on hover */
+        }
+
+        .nav-link:hover {
+            color: #ffffff;
+            /* Text color on hover */
+            background-color: #022b6b;
+            /* Background color on hover */
+            text-decoration: none;
+            /* Ensure no underline on hover */
+        }
+
+        .select_all {
+            text-decoration: underline;
+        }
+
+        .spinner-overlay {
+            display: none;
+            /* Hidden by default */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            /* Semi-transparent background */
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+    </style>
+
 </head>
 
 <body>
-    <div class="container col-md-8">
-        <!-- Navbar -->
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarTogglerDemo01" aria-controls="navbarTogglerDemo01" aria-expanded="false" aria-label="Toggle navigation">
-              <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarTogglerDemo01">
-              <a class="navbar-brand" href="{% url 'ping_operation' %}">NMS</a>
-              <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
-                <li class="nav-item active">
-                    <a class="nav-link" href="{% url 'ping_operation' %}">Home </a>
-                  
-                </li>
-                <li class="nav-item" id="refresh-item">
-                    <a class="nav-link" href=""></span>Refresh</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'logout' %}"></span>Log out</a>
-                </li>
-              
-              </ul>
-            
+
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid d-flex justify-content-between align-items-center">
+            <!-- Left Logo -->
+            <a class="navbar-brand" href="{% url 'ping_operation' %}">
+                <img src="{% static 'images/logo_left.png' %}" alt="logo">
+            </a>
+
+            <!-- Center Navigation Items -->
+            <div class="collapse navbar-collapse justify-content-center" id="navbarTogglerDemo01">
+                <ul class="navbar-nav">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="{% url 'ping_operation' %}">Home</a>
+                    </li>
+                    <li class="nav-item" id="refresh-item">
+                        <a class="nav-link" href="">Refresh</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'logout' %}">Log out</a>
+                    </li>
+                </ul>
             </div>
-          </nav>
-          <br>
-                
+
+            <!-- Right Logo -->
+            <a class="navbar-brand" href="{% url 'ping_operation' %}">
+                <img src="{% static 'images/nms_logo.png' %}" alt="logo">
+            </a>
+        </div>
+    </nav>
+
+
+    <div class="container col-12 mt-1">
         <div class="row justify-content-center">
             <!-- Network Operations Form -->
-            <div class="col-md-12">
-                <div class="card">
+            <div class="col-md-8">
+                <div class="card shadow-lg">
                     <div class="card-body">
-                        <h1 class="card-title text-center">Network Operations</h1>
-                        <form method="POST" action="{% url 'ping_operation' %}">
+                        <h3 class="card-title text-center mb-4">Network Operations</h3>
+                        <!-- Spinner Element -->
+                        <div class="spinner-overlay" id="spinnerOverlay">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                        <form id="inputForm" method="POST" action="{% url 'ping_operation' %}">
                             {% csrf_token %}
-                            
-                            <!-- Input for IP/Hostname -->
-                            <div class="mb-3">
 
-                                <label for="ipAddress" class="form-label">Enter IP Address or Domain Name</label>
-                                <input type="text" class="form-control" id="ipAddress" name="ip_address"
-                                    placeholder="Enter IP address or domain name" >
+                            <!-- Input for IP/Hostname -->
+                            <div class="form-group">
+                                <label for="ipAddress" class="form-label active">Enter IP Address or Hostname
+                                    Name</label>
+                                <input autocomplete="off" type="text" class="form-control" id="ipAddress"
+                                    name="ip_address" placeholder="Enter IP address or domain name">
                             </div>
 
-                            <div id="snmp_fields" style="display: none;">
-                                <h3>SNMP Configuration</h3>
-                        
-                                <label for="snmp_port">SNMP Port:</label>
-                                <input type="number" name="snmp_port" id="snmp_port" value="161" >
-                        
-                                <label for="snmp_version">SNMP Version:</label>
-                                <select name="snmp_version" id="snmp_version" >
-                                    <option value="1">SNMPv1</option>
-                                    <option value="2c">SNMPv2c</option>
+                            <!-- SNMP Fields -->
+                            <div id="snmp_fields" class="p-3 border rounded bg-light" style="display: none;">
+                                <h5 class="mb-3">SNMP Configuration</h5>
+
+                                <label for="snmp_version" class="form-label">SNMP Version:</label>
+                                <select class="form-control mb-3" name="snmp_version" id="snmp_version"
+                                    onchange="toggleSNMPVersionFields()">
+                                    <option value="2c" selected>SNMPv2c</option>
                                     <option value="3">SNMPv3</option>
-                                </select><br>
-                        
-                                <label for="read_community_string">Read Community String:</label>
-                                <input type="text" name="read_community_string" id="read_community_string">
-                        
-                                <label for="username">Username:</label>
-                                <input type="text" name="username" id="username">
-                        
-                                <label for="password">Password:</label>
-                                <input type="password" name="password" id="password">
-                        
-                                <label for="authentication_type">Authentication Type:</label>
-                                <select name="authentication_type" id="authentication_type">
-                                    <option value="None">None</option>
-                                    <option value="MD5">MD5</option>
-                                    <option value="SHA">SHA</option>
-                                </select><br>
-                        
-                                <label for="encryption_type">Encryption Type:</label>
-                                <select name="encryption_type" id="encryption_type">
-                                    <option value="None">None</option>
-                                    <option value="AES">AES</option>
-                                    <option value="DES">DES</option>
-                                </select><br>
-                        
-                                <label for="encryption_key">Encryption Key:</label>
-                                <input type="text" name="encryption_key" id="encryption_key">
-                        
-                                <label for="context_name">Context Name:</label>
-                                <input type="text" name="context_name" id="context_name">
-                        
-                                <label for="snmp_command">SNMP Command:</label>
-                                <select name="snmp_command" id="snmp_command" >
-                                    <option value="snmpwalk">SNMP Walk</option>
-                                    <option value="snmpget">SNMP Get</option>
-                                </select><br>
-                        
-                                <label for="oid">OID:</label>
-                                <input type="text" name="oid" id="oid" >
-                        
-                                <label for="output_format">Output Format:</label>
-                                <select name="output_format" id="output_format" >
-                                    <option value="default">Default</option>
-                                    <option value="numeric">Numeric OIDs</option>
-                                    <option value="certification">Certification Walk</option>
-                                    <option value="hex">Hex String</option>
-                                </select><br>
-                        
-                                <label for="source_peer">Source Peer:</label>
-                                <input type="text" name="source_peer" id="source_peer" >
-                            </div><br><br>
+                                </select>
+
+                                <!-- SNMPv2c Fields -->
+                                <div id="v2c" style="display: none;">
+                                    <label for="read_community_string" class="form-label">Read Community String:</label>
+                                    <input autocomplete="off" type="text" class="form-control mb-3"
+                                        name="read_community_string" id="read_community_string">
+                                </div>
+
+                                <!-- SNMPv3 Fields -->
+                                <div id="v3" style="display: none;">
+                                    <label for="username" class="form-label">Username:</label>
+                                    <input autocomplete="off" type="text" class="form-control mb-3" name="username"
+                                        id="username">
+
+                                    <label for="password" class="form-label">Password:</label>
+                                    <input autocomplete="off" type="password" class="form-control mb-3" name="password"
+                                        id="password">
+
+                                    <label for="authentication_type" class="form-label">Authentication Type:</label>
+                                    <select class="form-control mb-3" name="authentication_type"
+                                        id="authentication_type">
+                                        <option value="None">None</option>
+                                        <option value="MD5">MD5</option>
+                                        <option value="SHA">SHA</option>
+                                    </select>
+
+                                    <label for="encryption_type" class="form-label">Encryption Type:</label>
+                                    <select class="form-control mb-3" name="encryption_type" id="encryption_type">
+                                        <option value="None">None</option>
+                                        <option value="AES">AES</option>
+                                        <option value="DES">DES</option>
+                                    </select>
+
+                                    <label for="encryption_key" class="form-label">Encryption Key:</label>
+                                    <input autocomplete="off" type="text" class="form-control mb-3"
+                                        name="encryption_key" id="encryption_key">
+
+                                    <label for="snmp_command" class="form-label">SNMP Command:</label>
+                                    <select class="form-control mb-3" name="snmp_command" id="snmp_command">
+                                        <option value="snmpwalk">SNMP Walk</option>
+                                        <option value="snmpget">SNMP Get</option>
+                                    </select>
+
+                                    <label for="oid" class="form-label">Numeric OID:</label>
+                                    <input autocomplete="off" type="text" class="form-control mb-3" name="oid" id="oid"
+                                        value="1.3.6.1.2.1.1.5">
+
+                                    <label for="output_format" class="form-label">Output Format:</label>
+                                    <select class="form-control mb-3" name="output_format" id="output_format">
+                                        <option value="default">Default</option>
+                                        <option value="numeric">Numeric OIDs</option>
+                                        <option value="certification">Certification Walk</option>
+                                        <option value="hex">Hex String</option>
+                                    </select>
+                                </div>
+                            </div>
 
                             <!-- Checkboxes for Operations -->
-                            <div class="mb-3">
-                                <label class="form-label">Select Operations</label><br>
-                                <div class="form-check form-check-inline custom-checkbox">
-                                    <input class="form-check-input" type="checkbox" id="enable_ping" name="enable_ping" value="1">
-                                    <label class="form-check-label" for="enable_ping">Enable Ping</label>
+                            <div class="form-group">
+                                <label class="form-label active">Select Operations</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="selectAll"
+                                        onclick="toggleSelectAll()">
+                                    <label class="form-check-label active select_all" for="selectAll">Select All</label>
                                 </div>
-                                <div class="form-check form-check-inline custom-checkbox">
-                                    <input class="form-check-input" type="checkbox" id="verbose_ping" name="verbose_ping" value="1">
-                                    <label class="form-check-label" for="verbose_ping">Verbose Ping</label>
+                                <div class="row mt-1">
+                                    <!-- First Row of Checkboxes -->
+                                    <div class="col-md-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input operation-checkbox" type="checkbox"
+                                                id="enable_ping" name="enable_ping" value="1">
+                                            <label class="form-check-label" for="enable_ping">Ping</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input operation-checkbox" type="checkbox"
+                                                id="verbose_ping" name="verbose_ping" value="1">
+                                            <label class="form-check-label" for="verbose_ping">Verbose Ping</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input operation-checkbox" type="checkbox"
+                                                id="traceroute" name="traceroute" value="1">
+                                            <label class="form-check-label" for="traceroute">Traceroute</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input operation-checkbox" type="checkbox"
+                                                id="dns_lookup" name="dns_lookup" value="1">
+                                            <label class="form-check-label" for="dns_lookup">DNS Lookup</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input operation-checkbox" type="checkbox"
+                                                id="verbos_dns_lookup" name="verbos_dns_lookup" value="1">
+                                            <label class="form-check-label" for="verbos_dns_lookup">Verbose DNS
+                                                Lookup</label>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="form-check form-check-inline custom-checkbox">
-                                    <input class="form-check-input" type="checkbox" id="traceroute" name="traceroute" value="1">
-                                    <label class="form-check-label" for="traceroute">Traceroute</label>
-                                </div>
-                                <div class="form-check form-check-inline custom-checkbox">
-                                    <input class="form-check-input" type="checkbox" id="dns_lookup" name="dns_lookup" value="1">
-                                    <label class="form-check-label" for="dns_lookup">DNS Lookup</label>
-                                </div>
-                                <br><br>
-                                <div class="form-check form-check-inline custom-checkbox">
-                                    <input class="form-check-input" type="checkbox" id="snmp_walk" name="snmp_walk" value="1" onclick="toggleSNMPFields()">
-                                    <label class="form-check-label" for="snmp_walk">SNMP Walk</label>
+                                <div class="row">
+                                    <!-- Second Row for SNMP Walk -->
+                                    <div class="col-md-12 mt-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="snmp_walk"
+                                                name="snmp_walk" value="1" onclick="toggleSNMPFields()">
+                                            <label class="form-check-label" for="snmp_walk">SNMP Walk</label>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            
-                            
 
-                            <button class="btn btn-primary w-100" type="submit">Run Network Operations</button>
+
+                            <div class="text-center">
+                                <button class="btn btn-primary" type="submit" style="background: linear-gradient(45deg, #007bff, #0056b3); 
+                               color: #fff; 
+                               font-size: 0.9rem; 
+                               font-weight: bold; 
+                               border: none; 
+                               border-radius: 8px; 
+                               box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); 
+                               padding: 8px 16px; 
+                               width: auto; 
+                               display: inline-block; 
+                               transition: transform 0.2s ease, box-shadow 0.2s ease;">
+                                    Run Network Operations
+                                </button>
+                                <button class="btn btn-primary" style="background: linear-gradient(45deg, #ff5722, #d84315); 
+                                color: #fff; 
+                                font-size: 0.9rem; 
+                                font-weight: bold; 
+                                border: none; 
+                                border-radius: 8px; 
+                                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); 
+                                padding: 8px 16px; 
+                                width: auto; 
+                                display: inline-block; 
+                                transition: transform 0.2s ease, box-shadow 0.2s ease;" type="button" id="clearButton"
+                                    onclick="clearForm()">Clear</button>
+                            </div>
+
+
                         </form>
+                    </div>
+                </div>
+            </div>
 
-                        <br>
-
-                        <!-- Results section -->
-                        {% if results %}
-                            <div class="alert alert-success" role="alert">
-                                <strong>Results:</strong><br>
-                                <pre>{{ results }}</pre>
-                            </div>
-                        {% elif snmp_res%}
-                            <div class="alert alert-success" role="alert">
-                                <strong>Results:</strong><br>
-                                <pre>{{ snmp_res }}</pre>
-                            </div>
-                        {% elif error_message %}
-                            <div class="alert alert-danger" role="alert">
-                                <strong>Error:</strong><br>
-                                {{ error_message }}
-                            </div>
-                        
+            <!-- Network Results -->
+            <div class="col-md-12 mt-1">
+                <div>
+                    <div>
+                        {% if table %}
+                        <h5 class="card-title">Results</h5>
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Operation</th>
+                                    <th>Result</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in table.rows %}
+                                <tr>
+                                    <td>{{ row.0 }}</td>
+                                    <td>
+                                        <div style="max-height: 200px; overflow-y: auto;">
+                                            <pre>{{ row.1 }}</pre>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                         {% endif %}
-                        
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+
     <script>
+        // Function to clear the form inputs without submitting the form
+        function clearForm() {
+            var form = document.getElementById('inputForm');
+            form.reset();  // Reset all the input fields in the form
+            sessionStorage.removeItem('ip_address');
+
+            var Div = document.getElementById("snmp_fields");
+            Div.style.display = "none";  // Hide SNMPv2c fields
+
+
+        };
         function toggleSNMPFields() {
             const snmpFields = document.getElementById('snmp_fields');
             const snmpCheckbox = document.getElementById('snmp_walk');
-            snmpFields.style.display = snmpCheckbox.checked ? 'block' : 'none';
+            if (snmpCheckbox.checked) {
+                snmpFields.style.display = 'block';
+            } else {
+                snmpFields.style.display = 'none';
+            }
         }
-         // Function to refresh the page
-         function refreshPage() {
+
+        // Add a refresh button
+        document.getElementById("refresh-item").addEventListener("click", function () {
             location.reload();
-        }
+            sessionStorage.removeItem('ip_address');
+        });
+        // Function to toggle SNMP version-specific fields
+        function toggleSNMPVersionFields() {
+            var snmpVersion = document.getElementById("snmp_version").value;
+            var v2cDiv = document.getElementById("v2c");
+            var v3Div = document.getElementById("v3");
 
-        // Function to add click event to the Refresh nav item
-        function addClickEventToRefreshItem() {
-            const refreshItem = document.getElementById('refresh-item');
-            refreshItem.addEventListener('click', refreshPage);
-        }
+            // Show the v2c fields if SNMPv2c is selected, otherwise hide it
+            if (snmpVersion === "2c") {
+                v2cDiv.style.display = "block"; // Show SNMPv2c fields
+            } else {
+                v2cDiv.style.display = "none";  // Hide SNMPv2c fields
+            }
 
-        // Run the setup function when the window loads
-        window.onload = addClickEventToRefreshItem; 
+            if (snmpVersion === "3") {
+                v2cDiv.style.display = "block";
+                v3Div.style.display = "block"; // Show SNMPv2c fields
+            } else {
+                v3Div.style.display = "none";  // Hide SNMPv2c fields
+            }
+
+        };
+
+        // Ensure the correct fields are visible on page load
+        window.onload = function () {
+            toggleSNMPVersionFields();
+        };
+        // JavaScript for the "Select All" checkbox functionality
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('.operation-checkbox');
+            checkboxes.forEach(function (checkbox) {
+                if (checkbox !== selectAll) {
+                    checkbox.checked = selectAll.checked;
+                }
+            });
+        };
+
+        // save in local storage
+        // Load form data from sessionStorage on page load
+        window.onload = function () {
+            if (sessionStorage.getItem('ip_address')) {
+                document.getElementById('ipAddress').value = sessionStorage.getItem('ip_address');
+            };
+            document.getElementById('snmp_version').dispatchEvent(new Event('change'));
+
+        };
+
+        // Save form data to sessionStorage when user types in the fields
+        document.getElementById('inputForm').addEventListener('input', function () {
+            sessionStorage.setItem('ip_address', document.getElementById('ipAddress').value);
+        });
+        // Get form and spinner elements
+        const form = document.getElementById('inputForm');
+        const spinnerOverlay = document.getElementById('spinnerOverlay');
+
+        // Add event listener for form submission
+        form.addEventListener('submit', function () {
+            // Show the spinner
+            spinnerOverlay.style.display = 'flex';
+
+            // Optional: Ensure the form is not resubmitted
+            form.querySelector('button[type="submit"]').disabled = true;
+        });
+
     </script>
+
     <!-- Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    
+
 </body>
 
 </html>
