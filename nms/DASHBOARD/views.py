@@ -29,6 +29,7 @@ from pysnmp.hlapi import (
     usmDESPrivProtocol,
 )
 
+from django.contrib import messages
 
 @login_required
 def logout_view(request):
@@ -46,13 +47,23 @@ def ping_operation(request):
         dns_lookup = request.POST.get("dns_lookup")
         verbos_dns_lookup = request.POST.get("verbos_dns_lookup")
         snmp_walk = request.POST.get("snmp_walk")
+        simple_snmp_walk = request.POST.get("simple_snmp_walk")
         # Get all DNS names as a list
         dns_names = list(DNS.objects.values_list("dns_name", flat=True))
 
-        # Resolve the input (IP or hostname)
+        # Validate that the IP address or hostname does not have invalid spaces
+        if " " in get_ip_address:
+            messages.error(request, "Valid IP Address or Hostname is required.")
+            return render(
+                request,
+                "ping.html",
+                {"error_message": "IP address or hostname cannot contain spaces."},
+            )
+
+        # Validate the IP address format (IPv4)
         try:
             # If it's an IP address, validate it
-            socket.inet_aton(get_ip_address)
+            socket.inet_aton(get_ip_address)  # This raises socket.error if the IP is invalid
             ip_address = get_ip_address  # Use directly if valid IP
         except socket.error:
             try:
@@ -60,6 +71,7 @@ def ping_operation(request):
                 ip_address = socket.gethostbyname(get_ip_address)
             except socket.gaierror:
                 logger.error(f"Failed to resolve hostname: {get_ip_address}")
+                messages.error(request, "Valid IP Address or Hostname is required.")
                 return render(
                     request,
                     "ping.html",
@@ -114,7 +126,7 @@ def ping_operation(request):
                 if os_name == "Windows":
                     command = ["tracert", ip_address]
                 else:
-                    command = ["traceroute", ip_address]
+                    command = ["traceroute", "-I", ip_address]
 
                 logger.info(f"Running traceroute for {ip_address}.")
                 response = subprocess.run(command, capture_output=True, text=True)
@@ -203,7 +215,7 @@ def ping_operation(request):
                     snmp_result = []
 
                     # SNMP Version 2c
-                    if snmp_version == "2c":
+                    if snmp_version == "1":
                         for (
                             errorIndication,
                             errorStatus,
@@ -212,7 +224,7 @@ def ping_operation(request):
                         ) in nextCmd(
                             SnmpEngine(),
                             CommunityData(
-                                read_community_string,
+                                "public",
                                 mpModel=0 if snmp_version == "1" else 1,
                             ),
                             UdpTransportTarget((ip_address, int(snmp_port))),
@@ -285,11 +297,69 @@ def ping_operation(request):
                     ):
                         # Redirect to snmp_results.html with results
                         table.add_row(["SNMP Walk Result", "\n".join(snmp_result)])
-                        return render(
-                            request,
-                            "snmp_results.html",
-                            {"table": table},
-                        )
+                    else:
+                        # Append the error message to the table
+                        table.add_row(["SNMP Walk Result", "\n".join(snmp_result)])
+
+                except Exception as e:
+                    logger.error(
+                        f"An error occurred while performing SNMP walk: {str(e)}"
+                    )
+                    table.add_row(["SNMP Walk Result", f"Error: {str(e)}"])
+            
+            if simple_snmp_walk:
+                snmp_port = 161  # default port for SNMP
+                snmp_version = request.POST.get("snmp_version")
+                read_community_string = request.POST.get(
+                    "read_community_string", "public"
+                )
+                username = request.POST.get("username")
+                password = request.POST.get("password")
+                authentication_type = request.POST.get("authentication_type", "SHA")
+                encryption_type = request.POST.get("encryption_type", "AES")
+                encryption_key = request.POST.get("encryption_key")
+                oid = request.POST.get("oid")
+
+                try:
+                    # Initialize result list
+                    snmp_result = []
+
+                    # SNMP Version 2c
+                    if snmp_version == "1":
+                        for (
+                            errorIndication,
+                            errorStatus,
+                            errorIndex,
+                            varBinds,
+                        ) in nextCmd(
+                            SnmpEngine(),
+                            CommunityData(
+                                "public",
+                                mpModel=0 if snmp_version == "1" else 1,
+                            ),
+                            UdpTransportTarget((ip_address, int(snmp_port))),
+                            ContextData(),
+                            ObjectType(ObjectIdentity(oid)),
+                            lexicographicMode=False,
+                        ):
+                            if errorIndication:
+                                snmp_result.append(f"Error: {errorIndication}")
+                                break
+                            elif errorStatus:
+                                snmp_result.append(
+                                    f"Error: {errorStatus.prettyPrint()} at {errorIndex}"
+                                )
+                                break
+                            else:
+                                for varBind in varBinds:
+                                    snmp_result.append(f"{varBind[0]} = {varBind[1]}")
+
+                    # Check if the response contains valid results
+                    if snmp_result and not any(
+                        "Error" in result for result in snmp_result
+                    ):
+                        # Redirect to snmp_results.html with results
+                        table.add_row(["SNMP Walk Result", "\n".join(snmp_result)])
                     else:
                         # Append the error message to the table
                         table.add_row(["SNMP Walk Result", "\n".join(snmp_result)])
